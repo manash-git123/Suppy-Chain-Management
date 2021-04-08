@@ -48,7 +48,7 @@ app.post('/transactions/broadcast', function(req, res){
     supplyChain.networkNodes.forEach(networkNodeURL => {
         const requestOption = {
             uri: networkNodeURL + '/transactions',
-            methos: 'POST',
+            method: 'POST',
             body: newTransaction,
             json: true
         };
@@ -74,16 +74,59 @@ app.get('/mine', function(req, res){
     };
     const nonce = supplyChain.proofOfWork(previousBlockHash, currentBlockData);
     const blockHash = supplyChain.hashBlock(previousBlockHash, currentBlockData, nonce);
-
-    // Rewards for every mine will be provided here
-
     const newBlock = supplyChain.createNewBlock(nonce, previousBlockHash, blockHash);
-    res.json({
-        note: "The blocked has been successfully mined",
-        block: newBlock
+
+    const requirePromises = [];
+    supplyChain.networkNodes.forEach(networkNodeURL => {
+        const requestOption = {
+            uri: networkNodeURL + '/receive-new-block',
+            method: 'POST',
+            body: { newBlock: newBlock },
+            json: true
+        };
+        requirePromises.push(rp(requestOption)); 
+    });
+    Promise.all(requirePromises)    
+    .then(data => {
+
+        // Rewards for every mine will be provided here
+        
+        res.json({
+            note: "The blocked has been successfully mined",
+            block: newBlock
+        });
+
+    }).catch(function (){
+        console.log("Promise Rejected");
     });
 }); 
 
+// On mining by a different address the data needs to be verified and stored into the copy of blockchain if the block is legitimate
+app.post('/receive-new-block', function(req, res){
+    const newBlock = req.body.newBlock;
+    const lastBlock = supplyChain.getLastBlock();
+    
+    // 1st validation is done by checking whether the hash of the previous block matches to the previous hash according to the present copy of blockchain  
+    const correctHash = lastBlock.hash === newBlock.previousBlockHash;
+
+    // 2nd we validate the index of the block
+    const correctIndex = lastBlock['index'] + 1 === newBlock['index'];
+
+    // After validation we store the block and empty the pending transaction array
+    if(correctHash && correctIndex){
+        supplyChain.chain.push(newBlock);
+        supplyChain.pendingTransactions = [];
+        res.json({
+            note: "New Block Validated and Stored successfully",
+            newBlock: newBlock
+        });
+    }else{
+        res.json({
+            note: "Validation Failed and Block Rejected",
+            newBlock: newBlock
+        });
+    }
+});
 
 // Registration of a new Node into the blockchain goes through several process
 
