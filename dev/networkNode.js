@@ -239,6 +239,26 @@ app.get('/consensus', function(req, res){
 });
 
 
+// For Block Explorer
+
+app.get('/block/:blockHash', function(req, res){
+    const blockHash = req.params.blockHash;
+    const resBlock = supplyChain.getBlock(blockHash);
+    res.json({
+        block: resBlock
+    });
+});
+
+// Get Transaction from Attributes
+app.get('/transaction/:attribute', function(req, res){
+    const attribute = req.params.attribute;
+    const resTransaction = supplyChain.matchAttribute(attribute);
+    res.json({
+        transactions: resTransaction
+    });
+});
+
+
 app.listen(port, function(){
     console.log(`Listening on port ${port}. Link- http://localhost:${port}`);
 });

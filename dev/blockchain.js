@@ -149,5 +149,56 @@ Blockchain.prototype.chainIsValid = function(blockchain){
     return validChain;
 };
 
+
+// Components/Methods for Block Explorer
+Blockchain.prototype.getBlock = function(blockHash){
+    let correctBlock = null;
+    this.chain.forEach(block => {
+        if(block.hash === blockHash){
+            correctBlock = block;
+        }
+    });
+
+    return correctBlock;
+};
+
+// Return Block with attribute
+Blockchain.prototype.matchAttribute = function(attribute){
+    const resTransaction = [];
+    this.chain.forEach(block => {
+        block.transactions.forEach(transaction => {
+            if(transaction.transactionID === attribute){
+                resTransaction.push(transaction);
+            }
+            if(transaction.sender === attribute){
+                resTransaction.push(transaction);
+            }
+            if(transaction.recipient === attribute){
+                resTransaction.push(transaction);
+            }
+            if(transaction.productID === attribute){
+                resTransaction.push(transaction);
+            }
+            if(transaction.productType === attribute){
+                resTransaction.push(transaction);
+            }
+            if(transaction.paymentMode === attribute){
+                resTransaction.push(transaction);
+            }
+            if(transaction.paymentID === attribute){
+                resTransaction.push(transaction);
+            }
+            if(transaction.deliveryType === attribute){
+                resTransaction.push(transaction);
+            }
+            if(transaction.orderDate === attribute){
+                resTransaction.push(transaction);
+            }
+        });
+    });
+
+    return resTransaction;
+};
+
 // Export the Constructor Function
 module.exports = Blockchain;
