@@ -1,8 +1,11 @@
 "# Suppy-Chain-Management" 
 
 Enter Transaction : 
+
 URI: http://localhost:3001/transactions/broadcast
+
 METHOD: 'POST'
+
 BODY : 
 {
         "sender" : "Manash Pratim Das",
@@ -18,9 +21,13 @@ BODY :
 
 
 Register Node : 
+
 URI: http://localhost:3001/register-and-broadcast-node
+
 METHOD: 'POST'
+
 BODY:
+
 {
     "newNodeURL" : "http://localhost:3003"
 }
