@@ -34,5 +34,7 @@ BODY:
 
 
 Mine Block :
+
 URI: http://localhost:3002/mine
+
 METHOD: 'GET'
