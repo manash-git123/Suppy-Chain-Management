@@ -66,11 +66,12 @@ Blockchain.prototype.getLastBlock = function(){
 }
 
 // Function to insert a new transaction into the pendingTransaction[] array waiting to get verified whenever a new block is mined
-Blockchain.prototype.createNewTransaction = function(sender, recipient, productID, quantity, paymentMode, paymentID, deliveryType, orderDate){
+Blockchain.prototype.createNewTransaction = function(sender, recipient, productID, quantity, paymentMode, paymentID, productType, deliveryType, orderDate){
     const newTransaction = {
         sender: sender,
         recipient: recipient,
         productID: productID,
+        productType: productType,
         quantity:quantity,
         paymentMode: paymentMode,
         paymentID: paymentID,
@@ -119,6 +120,34 @@ Blockchain.prototype.proofOfWork = function(previousBlockHash, currentBlockData)
 
     return nonce;
 }
+
+
+Blockchain.prototype.chainIsValid = function(blockchain){
+    let validChain = true;
+    for(var i=1;i<blockchain.length;i++){
+        const currentBlock = blockchain[i];
+        const previousBlock = blockchain[i-1];
+        
+        const currBlockData = {
+            transactions: currentBlock['transactions'],
+            index: currentBlock['index']
+        };
+        const blockHash = this.hashBlock(previousBlock['hash'], currBlockData, currentBlock['nonce']);
+
+        if(blockHash.substring(0, 4) !== '0000') validChain = false;
+        if(currentBlock['previousBlockHash'] !== previousBlock['hash']) validChain = false;  
+    }
+
+    // Check Genesis Block 
+    const genesisBlock = blockchain[0];
+    const correctNonce = genesisBlock['nonce'] === 1;
+    const correctPreviousHash = genesisBlock['previousBlockHash'] === '0';
+    const correctHash = genesisBlock['hash'] === '0';
+    const correctTransaction = genesisBlock['transactions'].length === 0;
+    if(!correctHash || !correctNonce || !correctPreviousHash || !correctTransaction) validChain = false;
+
+    return validChain;
+};
 
 // Export the Constructor Function
 module.exports = Blockchain;

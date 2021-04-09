@@ -41,7 +41,7 @@ app.post('/transactions', function(req, res){
 
 // Endpoint we will hit to create a new transaction and broadcast it to the entire blockchain
 app.post('/transactions/broadcast', function(req, res){
-    const newTransaction = supplyChain.createNewTransaction(req.body.sender, req.body.recipient, req.body.productID, req.body.quantity, req.body.paymentMode, req.body.paymentID, req.body.deliveryType, req.body.orderDate);
+    const newTransaction = supplyChain.createNewTransaction(req.body.sender, req.body.recipient, req.body.productID, req.body.quantity, req.body.paymentMode, req.body.paymentID, req.body.productType, req.body.deliveryType, req.body.orderDate);
     supplyChain.addTransactionToPendingTransactions(newTransaction);
      
     const requirePromises = [];
@@ -69,7 +69,7 @@ app.get('/mine', function(req, res){
     const lastBlock = supplyChain.getLastBlock();
     const previousBlockHash = lastBlock['hash'];
     const currentBlockData = {
-        transactions : lastBlock.pendingTransactions,
+        transactions : supplyChain.pendingTransactions,
         index : lastBlock['index'] + 1
     };
     const nonce = supplyChain.proofOfWork(previousBlockHash, currentBlockData);
@@ -191,6 +191,52 @@ app.post('/register-node-bulk', function(req, res){
     res.json({note : 'All node registered in bulk'});
 });
 
+
+// Consensus
+app.get('/consensus', function(req, res){
+    const requestPromises = [];
+    supplyChain.networkNodes.forEach(networkNodeURL => {
+        const requestOption = {
+            uri: networkNodeURL + '/blockchain',
+            method: 'GET',
+            json: true
+        };
+        
+        requestPromises.push(rp(requestOption));
+    });
+    Promise.all(requestPromises)
+    .then(blockchains => {
+        const currentChainLength = supplyChain.chain.length;
+        let maxChainLength = currentChainLength;
+        let newLongestChain = null;
+        let newPendingTransaction = null;
+
+        blockchains.forEach(blockchain => { 
+            if(blockchain.chain.length > maxChainLength){
+                maxChainLength = blockchain.chain.length;
+                newLongestChain = blockchain.chain; 
+                newPendingTransaction = blockchain.pendingTransactions;
+            }
+        });
+
+        if(!newLongestChain || (newLongestChain && !supplyChain.chainIsValid(newLongestChain))){
+            console.log(supplyChain.chainIsValid(newLongestChain));
+            res.json({
+                note: 'Current Chain could not be added',
+                chain: supplyChain.chain
+            });
+        }else if(newLongestChain && supplyChain.chainIsValid(newLongestChain)){
+            supplyChain.chain = newLongestChain;
+            supplyChain.pendingTransactions = newPendingTransaction;
+            res.json({
+                note: 'Chain has been replaced',
+                chain: supplyChain.chain
+            });
+        }
+    }).catch(function (){
+        console.log("Promise Rejected");
+    });
+});
 
 
 app.listen(port, function(){
