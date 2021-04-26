@@ -5,6 +5,9 @@ const port = process.argv[2];
 const express = require('express');
 const app = express();
 
+//setting views
+app.set('view engine','ejs');
+
 // Create a unique ID for the current user
 const uuid = require('uuid');
 const userAddress = uuid.v1().split('-').join('');
@@ -25,10 +28,20 @@ const bodyParser = require('body-parser');
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 
+//Landing page route
+app.get("/",(req,res)=>{
+    res.render("landing");
+})
+
 //  This on hitting will return the entire blockchain
 app.get('/blockchain', function(req, res){
     res.send(supplyChain);
 });
+
+//transaction
+app.get('/transaction',(req,res)=>{
+    res.render("transaction");
+})
 
 // Endpoint we will hit to create a new transaction
 app.post('/transactions', function(req, res){
@@ -56,7 +69,8 @@ app.post('/transactions/broadcast', function(req, res){
     });
     Promise.all(requirePromises)    
     .then(data => {
-        res.json({note : `Transaction created and broadcasted successfully`});
+        // res.json({note : `Transaction created and broadcasted successfully`});
+        res.redirect("/blockchain");
     }).catch(function (){
         console.log("Promise Rejected");
     });
@@ -128,6 +142,12 @@ app.post('/receive-new-block', function(req, res){
     }
 });
 
+//Register
+app.get("/register",(req,res)=>{
+    var url = "http://"+req.get('host')
+    res.render("register",{url});
+})
+
 // Registration of a new Node into the blockchain goes through several process
 
 app.post('/register-and-broadcast-node', function(req, res){
@@ -164,7 +184,8 @@ app.post('/register-and-broadcast-node', function(req, res){
         }; 
         return rp(registerBulkOptions);
     }).then(data => {
-        res.json({ note : "New node has been successfully registered into the Blockchain Network"});
+        // res.json({ note : "New node has been successfully registered into the Blockchain Network"});
+        res.redirect("/blockchain");
     }).catch(function (){
         console.log("Promise Rejected");
     });
