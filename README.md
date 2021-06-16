@@ -7,7 +7,7 @@
 • Designed the smart contracts and its corresponding functionalities in Javascript
 
 
-Routes Crested : 
+Routes Created : 
 
 Enter Transaction : 
 
